@@ -7,12 +7,13 @@ interface Props {
   me: Person;
   theme: ThemeChoice;
   onTheme: (t: ThemeChoice) => void;
+  onEditFamily: () => void;
   onSwitchPerson: () => void;
   onSignOut: () => void;
 }
 
-// Tap your face: pick light/dark, hand the device to someone else, or sign out.
-export default function MeMenu({ me, theme, onTheme, onSwitchPerson, onSignOut }: Props) {
+// Tap your face: pick light/dark, edit the family, hand the device to someone else, or sign out.
+export default function MeMenu({ me, theme, onTheme, onEditFamily, onSwitchPerson, onSignOut }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -48,6 +49,7 @@ export default function MeMenu({ me, theme, onTheme, onSwitchPerson, onSignOut }
               ))}
             </div>
           </div>
+          <button className="btn" onClick={() => { setOpen(false); onEditFamily(); }}>Edit family</button>
           <button className="btn" onClick={() => { setOpen(false); onSwitchPerson(); }}>Switch person</button>
           <button className="btn" onClick={() => { setOpen(false); onSignOut(); }}>Sign out</button>
         </div>

@@ -62,6 +62,50 @@ async function readBody<T>(req: Request): Promise<T> {
   }
 }
 
+// ---------- people ----------
+// Anyone signed in can add family members and pets, rename them, or remove someone
+// nobody has tagged or posted as yet (removing would orphan memories otherwise).
+
+const slug = (name: string) => name.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24) || "person";
+
+function personFields(input: any) {
+  const name = typeof input?.name === "string" ? input.name.trim().replace(/\s+/g, " ") : "";
+  if (!name || name.length > 30) throw new HttpError(400, "Names are 1 to 30 characters.");
+  const raw = typeof input?.initial === "string" ? input.initial.trim() : "";
+  const initial = [...(raw || name)].slice(0, raw ? 2 : 1).join("").toUpperCase();
+  return { name, initial };
+}
+
+async function addPerson(req: Request, env: Env) {
+  const input = await readBody<any>(req);
+  const { name, initial } = personFields(input);
+  const kind = input?.kind === "pet" ? "pet" : "person";
+  let id = slug(name);
+  for (let n = 2; await env.DB.prepare("SELECT 1 FROM people WHERE id = ?").bind(id).first(); n++) id = `${slug(name)}-${n}`;
+  const max = await env.DB.prepare("SELECT COALESCE(MAX(sort), 0) AS s FROM people").first<{ s: number }>();
+  await env.DB.prepare("INSERT INTO people (id, name, initial, kind, sort) VALUES (?, ?, ?, ?, ?)")
+    .bind(id, name, initial, kind, (max?.s ?? 0) + 1).run();
+  return json({ id, name, initial, kind }, 201);
+}
+
+async function updatePerson(req: Request, env: Env, id: string) {
+  const { name, initial } = personFields(await readBody<any>(req));
+  const r = await env.DB.prepare("UPDATE people SET name = ?, initial = ? WHERE id = ?").bind(name, initial, id).run();
+  if (!r.meta.changes) throw new HttpError(404, "That person isn't in the family list.");
+  return json({ ok: true });
+}
+
+async function removePerson(env: Env, id: string) {
+  const used = await env.DB.prepare(
+    `SELECT (SELECT COUNT(*) FROM memory_people WHERE person_id = ?1) + (SELECT COUNT(*) FROM memories WHERE created_by = ?1)
+      + (SELECT COUNT(*) FROM places WHERE created_by = ?1) + (SELECT COUNT(*) FROM media WHERE added_by = ?1)
+      + (SELECT COUNT(*) FROM thoughts WHERE author = ?1) AS n`
+  ).bind(id).first<{ n: number }>();
+  if (used && used.n > 0) throw new HttpError(409, "They're in some memories, so they can't be removed. You can rename them instead.");
+  await env.DB.prepare("DELETE FROM people WHERE id = ?").bind(id).run();
+  return json({ ok: true });
+}
+
 // ---------- memories ----------
 
 interface MemoryInput {
@@ -478,6 +522,11 @@ async function route(req: Request, env: Env): Promise<Response> {
 
   let m: RegExpMatchArray | null;
   if (path === "/api/world" && method === "GET") return json(await world(env));
+  if (path === "/api/people" && method === "POST") return addPerson(req, env);
+  if ((m = path.match(/^\/api\/people\/([\w-]+)$/))) {
+    if (method === "PUT") return updatePerson(req, env, m[1]);
+    if (method === "DELETE") return removePerson(env, m[1]);
+  }
   if (path === "/api/memories" && method === "POST") return createMemory(req, env);
   // Ids are letters, digits, and hyphens (sample data uses "sample-m1").
   if ((m = path.match(/^\/api\/memories\/([\w-]+)$/))) {

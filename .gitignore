@@ -4,3 +4,5 @@ dist
 .dev.vars
 *.local
 worker-configuration.d.ts
+setup.json
+seed/family.sql

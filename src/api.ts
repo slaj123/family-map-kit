@@ -1,4 +1,4 @@
-import type { MemoryDetail, MemoryInput, World } from "./types";
+import type { MemoryDetail, MemoryInput, Person, World } from "./types";
 
 const PERSON_KEY = "fmap.person";
 
@@ -57,6 +57,11 @@ export const api = {
     call<MemoryDetail>(`/api/thoughts/${id}`, { method: "PUT", body: JSON.stringify({ text }) }),
   deleteThought: (id: string) => call<MemoryDetail>(`/api/thoughts/${id}`, { method: "DELETE" }),
   deleteMedia: (id: string) => call<MemoryDetail>(`/api/media/${id}`, { method: "DELETE" }),
+  addPerson: (p: { name: string; initial?: string; kind: Person["kind"] }) =>
+    call<Person>("/api/people", { method: "POST", body: JSON.stringify(p) }),
+  updatePerson: (id: string, p: { name: string; initial: string }) =>
+    call(`/api/people/${id}`, { method: "PUT", body: JSON.stringify(p) }),
+  removePerson: (id: string) => call(`/api/people/${id}`, { method: "DELETE" }),
 };
 
 export const mediaUrl = (id: string, thumb = false) => `/media/${id}${thumb ? "?thumb" : ""}`;

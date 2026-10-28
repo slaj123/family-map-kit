@@ -1,7 +1,7 @@
 import type { Person } from "../types";
 import Face from "./Face";
 
-export default function WhoAreYou({ people, onPick }: { people: Person[]; onPick: (id: string) => void }) {
+export default function WhoAreYou({ people, onPick, onEditFamily }: { people: Person[]; onPick: (id: string) => void; onEditFamily: () => void }) {
   const humans = people.filter((p) => p.kind === "person");
   return (
     <div className="gate">
@@ -14,6 +14,7 @@ export default function WhoAreYou({ people, onPick }: { people: Person[]; onPick
             <Face key={p.id} person={p} size="lg" showName onClick={() => onPick(p.id)} />
           ))}
         </div>
+        <button className="btn-link" onClick={onEditFamily}>Not listed? Add or edit family members</button>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ Built with React, Vite and MapLibre (free OpenFreeMap tiles), served by a Cloudf
 - [Node.js](https://nodejs.org) 20 or newer
 - A free [Cloudflare](https://dash.cloudflare.com/sign-up) account
 
-## 1. Install and try it locally
+## 1. Install
 
 ```bash
 git clone https://github.com/<your-username>/family-map-kit.git
@@ -26,31 +26,29 @@ cd family-map-kit
 npm install
 ```
 
-Create a file named `.dev.vars` (it is git-ignored) with your local passcode:
-
-```
-FAMILY_PASSCODE=pick-a-family-passcode
-```
-
-Create the local database, add the sample family, and start the app:
+## 2. Add your family
 
 ```bash
-npm run db:init
-npm run db:seed
+npm run setup
+```
+
+It asks for your name, everyone else in your family, and any pets. It also asks whether you want a few sample memories and whether to set up local testing. Your answers go into `setup.json` and `seed/family.sql`. **Both are git-ignored, so your family's names never end up in your repo.** They only go into your own database.
+
+With local testing on, it also creates `.dev.vars` with a random local passcode and a local database. Then:
+
+```bash
 npm run dev
 ```
 
-Open http://localhost:5173 and log in with the passcode.
+Open http://localhost:5173, log in with the passcode in `.dev.vars`, and pick your name.
 
-**On your phone (same Wi-Fi):** run `npm run dev:phone` and open the `https://192.168.x.x:5173` address it prints. Safari warns about the certificate the first time; tap **Show Details**, then **visit this website**. HTTPS is what lets the microphone and "I'm here" work.
+**Change the family later:** in the app, tap your circle (top right), then **Edit family**. Add people or pets, rename them, or remove anyone who isn't in a memory yet. If you skip `npm run setup` entirely, the app opens on a "Who's in your family?" screen the first time.
 
-## 2. Add your family
+**Just want to look around first?** `npm run db:init && npm run db:seed` loads a made-up family with sample memories.
 
-Edit `seed/seed.sql`:
+**On your phone (same Wi-Fi):** `npm run dev:phone`, then open the `https://192.168.x.x:5173` address it prints. Safari warns about the certificate the first time; tap **Show Details**, then **visit this website**.
 
-- The `people` rows are your family. `kind` is `person` or `pet`, `initial` is the letter shown on map pins, and `sort` is the display order.
-- Keep one person with id `me` if you'll use the [Habits kit](https://github.com/slaj123/habits-kit): it counts the memories that person adds.
-- Everything with an id starting with `sample-` is example data. `npm run db:clear-samples` removes it and keeps your family.
+**Set up with Claude Code:** open this folder in [Claude Code](https://claude.com/claude-code) and type `/setup`. It asks the same questions in conversation, applies them, and walks you through putting it online.
 
 ## 3. Put it online
 
@@ -64,11 +62,12 @@ Edit `seed/seed.sql`:
    npx wrangler r2 bucket create family-map-media
    ```
    Paste the `database_id` into `wrangler.jsonc`, replacing `REPLACE_WITH_D1_DATABASE_ID`.
-3. Create the tables, then add your family (edit `seed/seed.sql` first, and drop the sample rows if you don't want them online):
+3. Create the tables, then add your family from setup:
    ```bash
    npm run db:migrate
-   npx wrangler d1 execute family-map --remote --file=./seed/seed.sql
+   npx wrangler d1 execute family-map --remote --file=./seed/family.sql
    ```
+   Want the sample memories online too? Also run `npx wrangler d1 execute family-map --remote --file=./seed/sample-memories.sql`. Skipping this step works as well: the app asks who's in your family on first open.
 4. Set the family passcode. It is case-sensitive:
    ```bash
    npx wrangler secret put FAMILY_PASSCODE
@@ -83,6 +82,7 @@ Send the link and passcode to your family. On iPhone: open the link in Safari, t
 
 ## Changing things later
 
+- **Family members:** tap your circle, then **Edit family**.
 - **Categories and colors:** `CATEGORIES` in `src/types.ts`.
 - **App name and icon:** `index.html`, `public/manifest.webmanifest`, and `npm run icons`.
 - **Database changes:** add a file in `migrations/`, then run `npm run db:migrate`.

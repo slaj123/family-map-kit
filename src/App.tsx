@@ -14,6 +14,7 @@ import InstallHint from "./components/InstallHint";
 import Face from "./components/Face";
 import ListView from "./components/ListView";
 import MeMenu from "./components/MeMenu";
+import FamilyEditor from "./components/FamilyEditor";
 import Sheet from "./components/Sheet";
 import { useTheme } from "./theme";
 
@@ -89,6 +90,7 @@ export default function App() {
   const [rev, setRev] = useState(0);
   const [draftPoint, setDraftPoint] = useState<{ lat: number; lng: number } | null>(null);
   const [view, setViewState] = useState<View>(savedView);
+  const [familyOpen, setFamilyOpen] = useState(false);
   const theme = useTheme();
 
   const setView = (v: View) => {
@@ -184,9 +186,22 @@ export default function App() {
       </div>
     );
   }
+  // First run (nobody in the family yet), or someone tapped "Edit family".
+  const hasPeople = world.people.some((p) => p.kind === "person");
+  if (familyOpen || !hasPeople) {
+    return (
+      <FamilyEditor
+        people={world.people}
+        onChanged={refresh}
+        onClose={hasPeople ? () => setFamilyOpen(false) : undefined}
+        title={hasPeople ? "Your family" : "Who's in your family?"}
+        intro={hasPeople ? undefined : "Add yourself first, then everyone else, pets included. You can change this any time from your circle in the top corner."}
+      />
+    );
+  }
   const meValid = me && world.people.some((p) => p.id === me && p.kind === "person");
   if (!meValid) {
-    return <WhoAreYou people={world.people} onPick={(id) => { setMe(id); setMeState(id); }} />;
+    return <WhoAreYou people={world.people} onPick={(id) => { setMe(id); setMeState(id); }} onEditFamily={() => setFamilyOpen(true)} />;
   }
   const mePerson = world.people.find((p) => p.id === me)!;
   const panelOpen = !!place && !adding;
@@ -203,6 +218,7 @@ export default function App() {
           me={mePerson}
           theme={theme.choice}
           onTheme={theme.setChoice}
+          onEditFamily={() => setFamilyOpen(true)}
           onSwitchPerson={() => {
             setMe(null);
             setMeState(null);
