@@ -1,0 +1,36 @@
+{
+  "name": "family-map",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:phone": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "db:init": "wrangler d1 migrations apply family-map --local",
+    "db:seed": "wrangler d1 execute family-map --local --file=./seed/seed.sql",
+    "icons": "node scripts/make-icons.mjs",
+    "db:clear-samples": "wrangler d1 execute family-map --local --file=./seed/clear-samples.sql",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json",
+    "deploy": "npm run build && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply family-map --remote",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "heic2any": "^0.0.4",
+    "maplibre-gl": "^6.11.2",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.62.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "wrangler": "^4.143.0"
+  }
+}
