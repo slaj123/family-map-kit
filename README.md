@@ -26,6 +26,8 @@ cd family-map-kit
 npm install
 ```
 
+**On Windows:** if a `wrangler` step fails with "internal error", the folder path is probably too long (Windows caps paths at 260 characters, and the local database adds a lot). Move the folder somewhere short, like `C:\code\family-map-kit`, and run the step again.
+
 ## 2. Add your family
 
 ```bash
